@@ -6,6 +6,33 @@ static Window *s_main_window;
 // Create text layer
 static TextLayer *s_time_layer;
 
+// UPdate the time
+static void update_time() {
+    // Get a tm structure
+    time_t temp = time(NULL); 
+    struct tm *tick_time = localtime(&temp);
+
+    // Create a long-lived buffer
+    static char buffer[] = "00:00";
+
+    // Write the current hours and minutes into the buffer
+    if(clock_is_24h_style() == true) {
+        // Use 24 hour format
+        strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
+    } else {
+        // Use 12 hour format
+        strftime(buffer, sizeof("00:00"), "%I:%M", tick_time);
+    }
+
+    // Display this time on the TextLayer
+    text_layer_set_text(s_time_layer, buffer);
+}
+
+// Get time
+static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+    update_time();
+}
+
 // Main window load
 static void main_window_load(Window *window) {
     // Create time TextLayer
@@ -40,6 +67,12 @@ static void init() {
 
     // Show the Window on the watch, with animated=true
     window_stack_push(s_main_window, true);
+
+    // Show the time
+    update_time();
+
+    // Register with TickTimerService
+    tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
 }
 
 static void deinit() {
