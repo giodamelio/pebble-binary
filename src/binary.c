@@ -20,31 +20,17 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     update_time();
 }
 
-static GPath *s_my_path_ptr = NULL;
-
 // Draw the time
 void draw_time_layer(Layer *my_layer, GContext* ctx) {
-    // Fill the path:
-    graphics_context_set_fill_color(ctx, GColorWhite);
-    gpath_draw_filled(ctx, s_my_path_ptr);
-    // Stroke the path:
     graphics_context_set_stroke_color(ctx, GColorBlack);
-    gpath_draw_outline(ctx, s_my_path_ptr);
+    graphics_context_set_fill_color(ctx, GColorBlack);
+    graphics_fill_circle(ctx, GPoint(10, 10), 10);
 }
-
-// Raw path data
-static const GPathInfo BOLT_PATH_INFO = {
-  .num_points = 6,
-  .points = (GPoint []) {{21, 0}, {14, 26}, {28, 26}, {7, 60}, {14, 34}, {0, 34}}
-};
 
 // Main window load
 static void main_window_load(Window *window) {
     // Create time layer
     s_time_layer = layer_create(GRect(0, 0, 144, 168));
-
-    // Create our path
-    s_my_path_ptr = gpath_create(&BOLT_PATH_INFO);
 
     // Set our update proc
     layer_set_update_proc(s_time_layer, draw_time_layer);
