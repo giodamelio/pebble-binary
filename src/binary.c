@@ -3,29 +3,16 @@
 // Create main window
 static Window *s_main_window;
 
-// Create text layer
-static TextLayer *s_time_layer;
+// Create time layer
+static Layer *s_time_layer;
 
-// UPdate the time
+// Draw the time in binary
 static void update_time() {
     // Get a tm structure
     time_t temp = time(NULL); 
     struct tm *tick_time = localtime(&temp);
 
-    // Create a long-lived buffer
-    static char buffer[] = "00:00";
 
-    // Write the current hours and minutes into the buffer
-    if(clock_is_24h_style() == true) {
-        // Use 24 hour format
-        strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
-    } else {
-        // Use 12 hour format
-        strftime(buffer, sizeof("00:00"), "%I:%M", tick_time);
-    }
-
-    // Display this time on the TextLayer
-    text_layer_set_text(s_time_layer, buffer);
 }
 
 // Get time
@@ -33,26 +20,43 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     update_time();
 }
 
+static GPath *s_my_path_ptr = NULL;
+
+// Draw the time
+void draw_time_layer(Layer *my_layer, GContext* ctx) {
+    // Fill the path:
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    gpath_draw_filled(ctx, s_my_path_ptr);
+    // Stroke the path:
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    gpath_draw_outline(ctx, s_my_path_ptr);
+}
+
+// Raw path data
+static const GPathInfo BOLT_PATH_INFO = {
+  .num_points = 6,
+  .points = (GPoint []) {{21, 0}, {14, 26}, {28, 26}, {7, 60}, {14, 34}, {0, 34}}
+};
+
 // Main window load
 static void main_window_load(Window *window) {
-    // Create time TextLayer
-    s_time_layer = text_layer_create(GRect(0, 55, 144, 50));
-    text_layer_set_background_color(s_time_layer, GColorClear);
-    text_layer_set_text_color(s_time_layer, GColorBlack);
-    text_layer_set_text(s_time_layer, "31:41");
+    // Create time layer
+    s_time_layer = layer_create(GRect(0, 0, 144, 168));
 
-    // Improve the layout to be more like a watchface
-    text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
-    text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
+    // Create our path
+    s_my_path_ptr = gpath_create(&BOLT_PATH_INFO);
+
+    // Set our update proc
+    layer_set_update_proc(s_time_layer, draw_time_layer);
 
     // Add it as a child layer to the Window's root layer
-    layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
+    layer_add_child(window_get_root_layer(window), s_time_layer);
 }
 
 // Main window unload
 static void main_window_unload(Window *window) {
-    // Destroy TextLayer
-    text_layer_destroy(s_time_layer);
+    // Destroy our time_layer
+    layer_destroy(s_time_layer);
 }
 
 static void init() {
